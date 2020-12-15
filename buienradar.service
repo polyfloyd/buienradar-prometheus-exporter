@@ -1,0 +1,12 @@
+[Unit]
+Description=Prometheus exporter for the buienradar API
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/opt/buienradar-prometheus-exporter/buienradar.py
+Restart=always
+DynamicUser=true
+
+[Install]
+WantedBy=multi-user.target
