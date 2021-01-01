@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 
 import time
+import logging
 
 from lxml import etree
-from prometheus_client import Gauge, start_http_server
+from prometheus_client import Counter, Gauge, start_http_server
 import requests
+
+port = 9002
 
 
 def buienradar_current_data():
@@ -40,11 +43,26 @@ prometheus_gauges = {
     'windspeed_bft': Gauge('buienradar_windspeed_bft', 'The wind speed on the Beaufort scale', ['station']),
     'windspeed_ms': Gauge('buienradar_windspeed_ms', 'The wind speed in meters per second', ['station']),
 }
+error_count = Counter('buienradar_api_errors', 'The number of errors encountered while accessing the Buienradar API')
+
 
 def main():
-    start_http_server(9002)
+    logging.basicConfig(level=logging.INFO)
+
+    start_http_server(port)
+    logging.info('started prometheus exporter on port %d', port)
+
     while True:
-        for station in buienradar_current_data():
+        try:
+            data = list(buienradar_current_data())
+        except Exception as err:
+            error_count.inc()
+            logging.error('Could not get station data: %s', err)
+            time.sleep(60)
+            continue
+
+        logging.info('Got data for %d stations', len(data))
+        for station in data:
             name = station['name'][len('Meetstation '):]
             for metric in set(station.keys()) - {'name'}:
                 value = station[metric]
