@@ -1,4 +1,4 @@
-FROM python:3.9-buster
+FROM python:3
 
 WORKDIR /home/metrics
 COPY . /home/metrics
